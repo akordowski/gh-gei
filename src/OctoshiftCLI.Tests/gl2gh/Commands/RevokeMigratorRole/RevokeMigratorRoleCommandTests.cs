@@ -1,7 +1,7 @@
 using OctoshiftCLI.GitlabToGithub.Commands.RevokeMigratorRole;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GlToGithub.Commands.RevokeMigratorRole;
+namespace OctoshiftCLI.Tests.GitlabToGithub.Commands.RevokeMigratorRole;
 
 public class RevokeMigratorRoleCommandTests
 {

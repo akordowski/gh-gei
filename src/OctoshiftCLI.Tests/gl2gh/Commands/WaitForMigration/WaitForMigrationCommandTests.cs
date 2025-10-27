@@ -2,7 +2,7 @@ using FluentAssertions;
 using OctoshiftCLI.GitlabToGithub.Commands.WaitForMigration;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GlToGithub.Commands.WaitForMigration;
+namespace OctoshiftCLI.Tests.GitlabToGithub.Commands.WaitForMigration;
 
 public class WaitForMigrationCommandTests
 {

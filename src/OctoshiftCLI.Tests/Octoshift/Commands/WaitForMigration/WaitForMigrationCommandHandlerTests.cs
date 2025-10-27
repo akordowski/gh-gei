@@ -37,7 +37,7 @@ public class WaitForMigrationCommandHandlerTests
     public async Task With_Migration_ID_That_Succeeds_With_No_Warnings()
     {
         // Arrange
-        _mockGithubApi.SetupSequence(x => x.GetMigration(REPO_MIGRATION_ID).Result)
+        _mockGithubApi.SetupSequence(x => x.GetMigration(REPO_MIGRATION_ID, null).Result)
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, WarningsCount: 0, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, WarningsCount: 0, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.Succeeded, RepositoryName: TARGET_REPO, WarningsCount: 0, FailureReason: null, MigrationLogUrl: MIGRATION_URL));
@@ -70,7 +70,7 @@ public class WaitForMigrationCommandHandlerTests
         _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
         _mockOctoLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
 
-        _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID), Times.Exactly(3));
+        _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID, null), Times.Exactly(3));
 
         actualLogOutput.Should().Equal(expectedLogOutput);
 
@@ -81,7 +81,7 @@ public class WaitForMigrationCommandHandlerTests
     public async Task With_Migration_ID_That_Succeeds_With_1_Warning()
     {
         // Arrange
-        _mockGithubApi.SetupSequence(x => x.GetMigration(REPO_MIGRATION_ID).Result)
+        _mockGithubApi.SetupSequence(x => x.GetMigration(REPO_MIGRATION_ID, null).Result)
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, WarningsCount: 0, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, WarningsCount: 1, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.Succeeded, RepositoryName: TARGET_REPO, WarningsCount: 1, FailureReason: null, MigrationLogUrl: MIGRATION_URL));
@@ -117,7 +117,7 @@ public class WaitForMigrationCommandHandlerTests
         _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Once);
         _mockOctoLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
 
-        _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID), Times.Exactly(3));
+        _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID, null), Times.Exactly(3));
 
         actualLogOutput.Should().Equal(expectedLogOutput);
 
@@ -128,7 +128,7 @@ public class WaitForMigrationCommandHandlerTests
     public async Task With_Migration_ID_That_Succeeds_With_4_Warnings()
     {
         // Arrange
-        _mockGithubApi.SetupSequence(x => x.GetMigration(REPO_MIGRATION_ID).Result)
+        _mockGithubApi.SetupSequence(x => x.GetMigration(REPO_MIGRATION_ID, null).Result)
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, WarningsCount: 0, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, WarningsCount: 2, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.Succeeded, RepositoryName: TARGET_REPO, WarningsCount: 4, FailureReason: null, MigrationLogUrl: MIGRATION_URL));
@@ -164,7 +164,7 @@ public class WaitForMigrationCommandHandlerTests
         _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Once);
         _mockOctoLogger.Verify(m => m.LogSuccess(It.IsAny<string>()), Times.Once);
 
-        _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID), Times.Exactly(3));
+        _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID, null), Times.Exactly(3));
 
         actualLogOutput.Should().Equal(expectedLogOutput);
 
@@ -177,7 +177,7 @@ public class WaitForMigrationCommandHandlerTests
         // Arrange
         const string failureReason = "FAILURE_REASON";
 
-        _mockGithubApi.SetupSequence(x => x.GetMigration(REPO_MIGRATION_ID).Result)
+        _mockGithubApi.SetupSequence(x => x.GetMigration(REPO_MIGRATION_ID, null).Result)
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, WarningsCount: 0, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.InProgress, RepositoryName: TARGET_REPO, WarningsCount: 0, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.Failed, RepositoryName: TARGET_REPO, WarningsCount: 0, FailureReason: failureReason, MigrationLogUrl: MIGRATION_URL));
@@ -214,7 +214,7 @@ public class WaitForMigrationCommandHandlerTests
         _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
         _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()), Times.Once);
 
-        _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID), Times.Exactly(3));
+        _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID, null), Times.Exactly(3));
 
         actualLogOutput.Should().Equal(expectedLogOutput);
 
@@ -227,7 +227,7 @@ public class WaitForMigrationCommandHandlerTests
         // Arrange
         const string failureReason = "FAILURE_REASON";
 
-        _mockGithubApi.SetupSequence(x => x.GetMigration(REPO_MIGRATION_ID).Result)
+        _mockGithubApi.SetupSequence(x => x.GetMigration(REPO_MIGRATION_ID, null).Result)
             .Returns((State: RepositoryMigrationStatus.PendingValidation, RepositoryName: TARGET_REPO, WarningsCount: 0, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.PendingValidation, RepositoryName: TARGET_REPO, WarningsCount: 0, FailureReason: null, MigrationLogUrl: MIGRATION_URL))
             .Returns((State: RepositoryMigrationStatus.FailedValidation, RepositoryName: TARGET_REPO, WarningsCount: 0, FailureReason: failureReason, MigrationLogUrl: MIGRATION_URL));
@@ -265,7 +265,7 @@ public class WaitForMigrationCommandHandlerTests
         _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(7));
         _mockOctoLogger.Verify(m => m.LogError(It.IsAny<string>()), Times.Once);
 
-        _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID), Times.Exactly(3));
+        _mockGithubApi.Verify(m => m.GetMigration(REPO_MIGRATION_ID, null), Times.Exactly(3));
 
         actualLogOutput.Should().Equal(expectedLogOutput);
 

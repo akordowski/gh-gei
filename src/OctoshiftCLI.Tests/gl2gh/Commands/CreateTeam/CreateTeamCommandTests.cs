@@ -1,7 +1,7 @@
 using OctoshiftCLI.GitlabToGithub.Commands.CreateTeam;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GlToGithub.Commands.CreateTeam;
+namespace OctoshiftCLI.Tests.GitlabToGithub.Commands.CreateTeam;
 
 public class CreateTeamCommandTests
 {

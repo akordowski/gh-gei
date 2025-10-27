@@ -1,7 +1,7 @@
 using OctoshiftCLI.GitlabToGithub.Commands.ReclaimMannequin;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GlToGithub.Commands.ReclaimMannequin;
+namespace OctoshiftCLI.Tests.GitlabToGithub.Commands.ReclaimMannequin;
 
 public class ReclaimMannequinCommandTests
 {

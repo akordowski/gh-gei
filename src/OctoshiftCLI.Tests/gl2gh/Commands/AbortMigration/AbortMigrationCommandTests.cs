@@ -2,7 +2,7 @@ using FluentAssertions;
 using OctoshiftCLI.GitlabToGithub.Commands.AbortMigration;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GlToGithub.Commands.AbortMigration;
+namespace OctoshiftCLI.Tests.GitlabToGithub.Commands.AbortMigration;
 
 public class AbortMigrationCommandTests
 {
