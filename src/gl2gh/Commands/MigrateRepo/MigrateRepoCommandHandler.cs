@@ -367,14 +367,13 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         var errorData = new List<string>();
 
         var exitCode = await _processRunner.StartAsync(
-                $"docker images --filter=reference=\"{dockerImage}:latest\"",
+                $"docker images --filter=reference=\"{dockerImage}\"",
                 ".",
                 outputData.Add,
                 errorData.Add)
             .ConfigureAwait(false);
 
         return exitCode == 0 &&
-               errorData.Count == 0 &&
                outputData.Any(str => str.Contains(dockerImage, StringComparison.OrdinalIgnoreCase));
     }
 }
