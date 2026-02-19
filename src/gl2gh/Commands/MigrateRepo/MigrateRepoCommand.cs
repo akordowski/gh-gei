@@ -44,10 +44,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> DockerImage { get; } = new(
         name: "--docker-image",
-        description: "The gl-exporter Docker image name (e.g. ghcr.io/ORG/gl-exporter).")
-    {
-        IsRequired = true
-    };
+        description: "The gl-exporter Docker image name (e.g. ghcr.io/ORG/gl-exporter:latest). If the Docker image is not provided the gl_exporter will be executed.");
 
     public Option<string> GitlabServerUrl { get; } = new(
         name: "--gitlab-server-url",

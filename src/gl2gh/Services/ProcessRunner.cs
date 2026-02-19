@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -10,8 +11,9 @@ public class ProcessRunner : IProcessRunner
     public async Task<int> StartAsync(
         string command,
         string workingDirectory,
-        Action<string>? outputDataReceived = null,
-        Action<string>? errorDataReceived = null)
+        IReadOnlyList<KeyValuePair<string, string>> environmentVariables = null,
+        Action<string> outputDataReceived = null,
+        Action<string> errorDataReceived = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(command);
         ArgumentException.ThrowIfNullOrWhiteSpace(workingDirectory);
@@ -42,6 +44,14 @@ public class ProcessRunner : IProcessRunner
             CreateNoWindow = true,
             WorkingDirectory = workingDirectory
         };
+
+        if (environmentVariables?.Count > 0)
+        {
+            foreach (var environmentVariable in environmentVariables)
+            {
+                processStartInfo.EnvironmentVariables[environmentVariable.Key] = environmentVariable.Value;
+            }
+        }
 
         using var process = new Process();
         process.StartInfo = processStartInfo;

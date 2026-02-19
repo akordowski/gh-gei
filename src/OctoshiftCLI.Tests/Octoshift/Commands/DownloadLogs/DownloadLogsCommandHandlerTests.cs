@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -349,7 +350,7 @@ public class DownloadLogsCommandHandlerTests
         const string logUrl = "some-url";
         const string repoName = "test-repo-name";
 
-        _mockGithubApi.Setup(m => m.GetMigration(migrationId))
+        _mockGithubApi.Setup(m => m.GetMigration(migrationId, It.IsAny<Dictionary<string, string>>()))
             .ReturnsAsync((State: "SUCCEEDED", RepositoryName: repoName, WarningsCount: 0, FailureReason: "", MigrationLogUrl: logUrl));
         _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
@@ -364,7 +365,7 @@ public class DownloadLogsCommandHandlerTests
 
         // Assert
         _mockLogger.Verify(m => m.LogWarning("--github-org and --github-repo are ignored when --migration-id is specified."), Times.Once);
-        _mockGithubApi.Verify(m => m.GetMigration(migrationId), Times.Once);
+        _mockGithubApi.Verify(m => m.GetMigration(migrationId, It.IsAny<Dictionary<string, string>>()), Times.Once);
         _mockGithubApi.Verify(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
@@ -377,7 +378,7 @@ public class DownloadLogsCommandHandlerTests
         const string repoName = "test-repo-name";
         const string expectedFileName = $"migration-log-{repoName}-{migrationId}.log";
 
-        _mockGithubApi.Setup(m => m.GetMigration(migrationId))
+        _mockGithubApi.Setup(m => m.GetMigration(migrationId, It.IsAny<Dictionary<string, string>>()))
             .ReturnsAsync((State: "SUCCEEDED", RepositoryName: repoName, WarningsCount: 0, FailureReason: "", MigrationLogUrl: logUrl));
         _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
 
@@ -389,7 +390,7 @@ public class DownloadLogsCommandHandlerTests
         await _handler.Handle(args);
 
         // Assert
-        _mockGithubApi.Verify(m => m.GetMigration(migrationId), Times.Once);
+        _mockGithubApi.Verify(m => m.GetMigration(migrationId, It.IsAny<Dictionary<string, string>>()), Times.Once);
         _mockHttpDownloadService.Verify(m => m.DownloadToFile(logUrl, expectedFileName), Times.Once);
         _mockGithubApi.Verify(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
@@ -419,6 +420,6 @@ public class DownloadLogsCommandHandlerTests
         // Assert
         _mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, githubRepo), Times.Once);
         _mockHttpDownloadService.Verify(m => m.DownloadToFile(logUrl, expectedFileName), Times.Once);
-        _mockGithubApi.Verify(m => m.GetMigration(It.IsAny<string>()), Times.Never);
+        _mockGithubApi.Verify(m => m.GetMigration(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>()), Times.Never);
     }
 }

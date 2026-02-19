@@ -47,7 +47,19 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         ValidateOptions(args);
 
-        await ValidateDockerAsync(args.DockerImage);
+        var useDocker = false;
+
+        // If the Docker image is not provided, we will assume that the gl_exporter is already installed and available
+        // in the PATH.
+        if (string.IsNullOrWhiteSpace(args.DockerImage))
+        {
+            await ValidateGlExporterAsync();
+        }
+        else
+        {
+            await ValidateDockerAsync(args.DockerImage);
+            useDocker = true;
+        }
 
         var exportId = 0L;
         var migrationSourceId = "";
@@ -66,7 +78,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.ShouldGenerateArchive())
         {
-            exportId = await GenerateArchive(args);
+            exportId = await GenerateArchive(useDocker, args);
         }
 
         if (args.ShouldUploadArchive())
@@ -125,20 +137,42 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
     }
 
-    private async Task<long> GenerateArchive(MigrateRepoCommandArgs args)
+    private async Task<long> GenerateArchive(bool useDocker, MigrateRepoCommandArgs args)
     {
         var exportId = long.Parse($"{DateTime.UtcNow:yyyyMMddHHmmss}");
         var archiveFileName = GetArchiveFileName(exportId);
-        var command = GetGLExporterCommand(args, archiveFileName);
+
+        string command;
+        IReadOnlyList<KeyValuePair<string, string>> environmentVariables = null;
+
+        if (useDocker)
+        {
+            command = GetGlExporterDockerCommand(args, archiveFileName);
+        }
+        else
+        {
+            command = GetGlExporterCommand(args, archiveFileName);
+            environmentVariables = [
+                new KeyValuePair<string, string>("GITLAB_API_ENDPOINT", args.GitlabApiUrl),
+                new KeyValuePair<string, string>("GITLAB_USERNAME", args.GitlabUsername),
+                new KeyValuePair<string, string>("GITLAB_API_PRIVATE_TOKEN", args.GitlabPat)
+            ];
+        }
 
         _log.LogInformation($"Export started. Export ID: {exportId}");
+
+        _log.LogDebug("Run the command to export GitLab archive:");
+        _log.LogDebug(command);
 
         var exitCode = await _processRunner.StartAsync(
                 command,
                 args.ArchivePath,
+                environmentVariables,
                 _log.LogInformation,
                 _log.LogError)
             .ConfigureAwait(false);
+
+        _log.LogDebug($"The command exited with the exit code {exitCode}.");
 
         if (exitCode != 0)
         {
@@ -158,7 +192,53 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private string GetArchiveFilePath(MigrateRepoCommandArgs args, long exportId) =>
         Path.GetFullPath(Path.Combine(args.ArchivePath, GetArchiveFileName(exportId)));
 
-    private static string GetGLExporterCommand(MigrateRepoCommandArgs args, string outFile)
+    private static string GetGlExporterCommand(MigrateRepoCommandArgs args, string outFile)
+    {
+        var command = new StringBuilder()
+            .AppendLine("gl_exporter")
+            .AppendLine(CultureInfo.InvariantCulture, $"  --out-file \"{outFile}\"")
+            .AppendLine(CultureInfo.InvariantCulture, $"  --namespace \"{args.GitlabNamespace}\"")
+            .AppendLine(CultureInfo.InvariantCulture, $"  --project \"{args.GitlabProject}\"");
+
+        if (!string.IsNullOrWhiteSpace(args.GitlabOnly))
+        {
+            command = command.AppendLine(CultureInfo.InvariantCulture, $"  --only \"{args.GitlabOnly}\"");
+        }
+
+        if (!string.IsNullOrWhiteSpace(args.GitlabExcept))
+        {
+            command = command.AppendLine(CultureInfo.InvariantCulture, $"  --except \"{args.GitlabExcept}\"");
+        }
+
+        if (args.GitlabLockProjects is not null)
+        {
+            command = command.AppendLine(CultureInfo.InvariantCulture, $"  --lock-projects \"{args.GitlabLockProjects}\"");
+        }
+
+        if (args.GitlabWithoutRenumbering is not null)
+        {
+            command = command.AppendLine(CultureInfo.InvariantCulture, $"  --without-renumbering \"{args.GitlabWithoutRenumbering}\"");
+        }
+
+        if (!string.IsNullOrWhiteSpace(args.GitlabManifest))
+        {
+            command = command.AppendLine(CultureInfo.InvariantCulture, $"  --manifest \"{args.GitlabManifest}\"");
+        }
+
+        if (args.GitlabSslNoVerify)
+        {
+            command = command.AppendLine(CultureInfo.InvariantCulture, $"  --ssl-no-verify");
+        }
+
+        if (args.GitlabDebug)
+        {
+            command = command.AppendLine(CultureInfo.InvariantCulture, $"  --debug");
+        }
+
+        return command.ToString();
+    }
+
+    private static string GetGlExporterDockerCommand(MigrateRepoCommandArgs args, string outFile)
     {
         var command = new StringBuilder()
             .AppendLine("docker run")
@@ -286,28 +366,33 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private async Task ValidateDockerAsync(string dockerImage)
     {
-        var isDockerInstalled = await IsDockerAvailableAsync();
+        var isDockerAvailable = await IsDockerAvailableAsync();
 
-        if (!isDockerInstalled)
+        if (!isDockerAvailable)
         {
             throw new OctoshiftCliException("Docker is not available.");
         }
 
-        var isDockerImageInstalled = await IsDockerImageAvailableAsync(dockerImage);
+        var isDockerImageAvailable = await IsDockerImageAvailableAsync(dockerImage);
 
-        if (!isDockerImageInstalled)
+        if (!isDockerImageAvailable)
         {
             throw new OctoshiftCliException($"The Docker image {dockerImage} is not available.");
         }
     }
 
+    private async Task ValidateGlExporterAsync()
+    {
+        var isGlExporterAvailable = await IsGlExporterAvailableAsync();
+
+        if (!isGlExporterAvailable)
+        {
+            throw new OctoshiftCliException("gl_exporter is not available.");
+        }
+    }
+
     private void ValidateOptions(MigrateRepoCommandArgs args)
     {
-        if (string.IsNullOrWhiteSpace(args.DockerImage))
-        {
-            throw new OctoshiftCliException("Docker image must be passed as --docker-image.");
-        }
-
         if (args.ShouldGenerateArchive())
         {
             if (GetGlUsername(args).IsNullOrWhiteSpace())
@@ -346,34 +431,73 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private async Task<bool> IsDockerAvailableAsync()
     {
+        const string command = "docker -v";
         var outputData = new List<string>();
-        var errorData = new List<string>();
+
+        _log.LogDebug($"Run the command '{command}' to check if the Docker is available.");
 
         var exitCode = await _processRunner.StartAsync(
-                "docker -v",
+                command,
                 ".",
-                outputData.Add,
-                errorData.Add)
+                outputDataReceived: output =>
+                {
+                    outputData.Add(output);
+                    _log.LogDebug(output);
+                },
+                errorDataReceived: _log.LogError)
             .ConfigureAwait(false);
 
+        _log.LogDebug($"The command exited with the exit code {exitCode}.");
+
         return exitCode == 0 &&
-               errorData.Count == 0 &&
                outputData.Any(str => str.StartsWith("Docker version", StringComparison.OrdinalIgnoreCase));
     }
 
     private async Task<bool> IsDockerImageAvailableAsync(string dockerImage)
     {
+        var command = $"docker images --filter=reference=\"{dockerImage}\"";
         var outputData = new List<string>();
-        var errorData = new List<string>();
+
+        _log.LogDebug($"Run the command '{command}' to check if the Docker image is available.");
 
         var exitCode = await _processRunner.StartAsync(
-                $"docker images --filter=reference=\"{dockerImage}\"",
+                command,
                 ".",
-                outputData.Add,
-                errorData.Add)
+                outputDataReceived: output =>
+                {
+                    outputData.Add(output);
+                    _log.LogDebug(output);
+                },
+                errorDataReceived: _log.LogError)
             .ConfigureAwait(false);
+
+        _log.LogDebug($"The command exited with the exit code {exitCode}.");
 
         return exitCode == 0 &&
                outputData.Any(str => str.Contains(dockerImage, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task<bool> IsGlExporterAvailableAsync()
+    {
+        const string command = "gl_exporter --version";
+        var outputData = new List<string>();
+
+        _log.LogDebug($"Run the command '{command}' to check if the gl_exporter is available.");
+
+        var exitCode = await _processRunner.StartAsync(
+                command,
+                ".",
+                outputDataReceived: output =>
+                {
+                    outputData.Add(output);
+                    _log.LogDebug(output);
+                },
+                errorDataReceived: _log.LogError)
+            .ConfigureAwait(false);
+
+        _log.LogDebug($"The command exited with the exit code {exitCode}.");
+
+        return exitCode == 0 &&
+               outputData.Any(str => str.Contains("Gitlab Exporter", StringComparison.OrdinalIgnoreCase));
     }
 }
