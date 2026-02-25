@@ -27,6 +27,7 @@ public class MigrateRepoCommandArgs : CommandArgs
     public bool QueueOnly { get; set; }
     public string TargetRepoVisibility { get; set; }
     public string TargetApiUrl { get; set; }
+    public string TargetUploadsUrl { get; set; }
     public string ArchiveUrl { get; set; }
     public string ArchivePath { get; set; }
     public bool KeepArchive { get; set; }

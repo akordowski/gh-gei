@@ -36,6 +36,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(QueueOnly);
         AddOption(TargetRepoVisibility.FromAmong("public", "private", "internal"));
         AddOption(TargetApiUrl);
+        AddOption(TargetUploadsUrl);
         AddOption(Verbose);
         AddOption(ArchiveUrl);
         AddOption(ArchivePath);
@@ -132,6 +133,10 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         name: "--target-api-url",
         description: "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com");
 
+    public Option<string> TargetUploadsUrl { get; } = new(
+            name: "--target-uploads-url",
+            description: "The URL of the target uploads API, if not migrating to github.com. Defaults to https://uploads.github.com");
+
     public Option<bool> Verbose { get; } = new("--verbose");
 
     public Option<string> ArchiveUrl { get; } = new(
@@ -160,8 +165,8 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         }
 
         var log = sp.GetRequiredService<OctoLogger>();
-        var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-        var githubApi = githubApiFactory.Create(args.TargetApiUrl, null, args.GithubPat);
+        var targetGithubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
+        var targetGithubApi = targetGithubApiFactory.Create(args.TargetApiUrl, args.TargetUploadsUrl, args.GithubPat);
         var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
         var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
         var warningsCountLogger = sp.GetRequiredService<WarningsCountLogger>();
@@ -169,7 +174,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
         return new MigrateRepoCommandHandler(
             log,
-            githubApi,
+            targetGithubApi,
             environmentVariableProvider,
             fileSystemProvider,
             warningsCountLogger,
