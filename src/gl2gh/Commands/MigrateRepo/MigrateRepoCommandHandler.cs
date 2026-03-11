@@ -324,8 +324,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         try
         {
-            args.TargetRepoVisibility = "private";
-
             migrationId = await _githubApi.StartGitlabMigration(migrationSourceId, gitlabRepoUrl, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl, args.TargetRepoVisibility);
         }
         catch (OctoshiftCliException ex) when (ex.Message == $"A repository called {args.GithubOrg}/{args.GithubRepo} already exists")
